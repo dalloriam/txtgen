@@ -3,7 +3,7 @@ from typing import Any, Dict, List
 
 class Context:
 
-    def __init__(self, ctx_dict: Dict[str, Any]) -> None:
+    def __init__(self, ctx_dict: Dict[str, Any] = None) -> None:
         self.ctx = ctx_dict if ctx_dict is not None else {}
 
     def get(self, key: str) -> List[str]:

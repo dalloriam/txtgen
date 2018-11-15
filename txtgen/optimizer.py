@@ -1,21 +1,20 @@
-from copy import deepcopy as copy
+from copy import deepcopy
 
-from dalloriam.generation import nodes
+from txtgen import nodes
+from txtgen.context import Context
 
-from typing import Dict, Optional, Union, cast
-
-import random
-
-
-NodesWithChildren = Union[nodes.EntityNode, nodes.AnyNode, nodes.ListNode, nodes.UniqueNode]
+from typing import cast, Optional, Union
 
 
-class TreeTraverser:
+NodesWithChildren = Union[nodes.EntityNode, nodes.AnyNode, nodes.ListNode]
 
-    def __init__(self, ctx, entities: Dict[str, nodes.EntityNode], macros) -> None:
-        self.context = ctx
-        self.entities = entities
-        self.macros = macros
+
+class Optimizer:
+
+    def __init__(self, entities, macros, ctx: Context = None) -> None:
+        self._entities = entities
+        self._macros = macros
+        self._ctx = ctx
 
     def visit_AnyNode(self, node: nodes.AnyNode, parent: nodes.Node) -> nodes.Node:
         if len(node.children) == 1:
@@ -24,22 +23,19 @@ class TreeTraverser:
         return node
 
     def visit_ConditionNode(self, node: nodes.ConditionNode, parent: nodes.Node) -> nodes.Node:
-        for k, v in node.conditions.items():
-            if k.generate() != v.generate():
-                return node.else_expression
-        return node.expression
+        return nodes.exec_condition(node)
 
     def visit_MacroNode(self, node: nodes.MacroNode, parent: nodes.Node) -> nodes.MacroNode:
         # Add the macro's params to current context & traverse the macro body to replace ReferenceNodes to params by
         # the actual param node.
         new_entities = {
-            **self.entities,
+            **self._entities,
             **{p.name: p for p in node.params}
         }
 
-        traverser = TreeTraverser(self.context, new_entities, self.macros)
+        optimizer = Optimizer(new_entities, self._macros)
 
-        node.children = [traverser.walk(child, node) for child in node.children]
+        node.children = [optimizer.walk(child, node) for child in node.children]
 
         return node
 
@@ -51,7 +47,7 @@ class TreeTraverser:
 
     def visit_EntityNode(self, node: nodes.EntityNode, parent: nodes.Node) -> nodes.EntityNode:
         if node.macro is not None:
-            macro_copy = copy(self.macros[node.macro.key])
+            macro_copy = deepcopy(self._macros[node.macro.key])
 
             if len(macro_copy.params) != len(node.children):
                 diff = abs(len(macro_copy.params) - len(node.children))
@@ -65,42 +61,27 @@ class TreeTraverser:
         return node
 
     def visit_ReferenceNode(self, node: nodes.ReferenceNode, parent: nodes.Node) -> nodes.EntityNode:
-        return self.entities[node.key]
+        return self._entities[node.key]
 
-    def visit_LiteralNode(self, node: nodes.LiteralNode, parent: nodes.Node) -> Optional[nodes.Node]:
-
+    @staticmethod
+    def visit_LiteralNode(node: nodes.LiteralNode, parent: nodes.Node) -> Optional[nodes.Node]:
         if node.value == '':
             return None
-
-        if node.value not in [',', '.', ':', ';', '!', '?']:
-            return nodes.ListNode([
-                nodes.LiteralNode(' '),
-                node
-            ])
-        return node
-
-    def visit_UniqueNode(self, node: nodes.UniqueNode, parent: nodes.Node) -> nodes.Node:
-
-        if len(node.children) == 1 and node.children[0].type == 'PlaceholderNode':
-            # Have to manually call the visit literal method since new nodes will never be visited as tree is traversed
-            # depth-first
-            node.children = [
-                self.visit_LiteralNode(nodes.LiteralNode(val), parent) for val in self.context.get(node.children[0].key)
-            ]
-            random.shuffle(node.children)
-
-        return node
+        return nodes.sub_punctuation(node)
 
     def visit_PlaceholderNode(self, node: nodes.PlaceholderNode, parent: nodes.Node) -> nodes.Node:
-        # Not the most elegant solution, could be improved
-        if parent.type != 'UniqueNode':
-            # Have to manually call the visit literal method since new nodes will never be visited as tree is traversed
-            # depth-first
-            return nodes.AnyNode([
-                self.visit_LiteralNode(nodes.LiteralNode(val), parent) for val in self.context.get(node.key)
-            ])
+        if not self._ctx:
+            return node
 
-        return node
+        # Not the most elegant solution, could be improved
+        # Have to manually call the visit literal method since new nodes will never be visited as tree is traversed
+        # depth-first
+        try:
+            values = self._ctx.get(node.key)
+        except KeyError:
+            return node
+
+        return nodes.AnyNode([self.visit_LiteralNode(nodes.LiteralNode(val), parent) for val in values])
 
     def walk(self, node: nodes.Node, parent: nodes.Node = None) -> Optional[nodes.Node]:
 
@@ -145,3 +126,8 @@ class TreeTraverser:
             node = getattr(self, visit_name)(node, parent=parent)
 
         return node
+
+
+def optimize(grammar: nodes.Grammar, bind_ctx: Context = None) -> nodes.Grammar:
+    optimizer = Optimizer(grammar.entities, grammar.macros, bind_ctx)
+    return cast(nodes.Grammar, optimizer.walk(grammar))

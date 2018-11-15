@@ -1,17 +1,28 @@
+from txtgen.constants import Function, TokenType
 from typing import Any, Iterator, Tuple
 
 
 class Token:
 
-    def __init__(self, token_type: str, value: Any) -> None:
+    def __init__(self, token_type: TokenType, value: Any = None) -> None:
         self.type = token_type
-        self.value = value
+        self._value = value
+
+    @property
+    def value(self) -> str:
+        return self._value or self.type.value
 
     def __str__(self) -> str:
-        return f"<{self.type} value='{self.value}'>"
+        return f"<{self.type.name} value='{self.value or self.type.value}'>"
 
     def __repr__(self) -> str:
         return str(self)
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, Token):
+            return NotImplemented
+
+        return other.value == self.value and other.type == self.type
 
 
 def validate_alpha(char: str) -> bool:
@@ -46,25 +57,25 @@ def tokenize(input_string: str) -> Iterator[Token]:
     head, *tail = input_string
 
     if head == ')':
-        yield Token('paren_c', ')')
+        yield Token(TokenType.ParenClose)
 
     elif head == '=':
-        yield Token('equal', '=')
+        yield Token(TokenType.Equal)
 
     elif head == '(':
-        yield Token('paren_o', '(')
+        yield Token(TokenType.ParenOpen)
 
     elif head == '<':
-        yield Token('angle_o', '<')
+        yield Token(TokenType.AngleOpen)
 
     elif head == '>':
-        yield Token('angle_c', '>')
+        yield Token(TokenType.AngleClose)
 
     elif head == '[':
-        yield Token('bracket_o', '[')
+        yield Token(TokenType.BracketOpen)
 
     elif head == ']':
-        yield Token('bracket_c', ']')
+        yield Token(TokenType.BracketClose)
 
     elif head.isspace() or head == ',':
         # We want to ignore whitespace & commas in enumerations
@@ -72,29 +83,32 @@ def tokenize(input_string: str) -> Iterator[Token]:
 
     elif head == '$':
         body, tail = extract_string(tail)
-        yield Token('placeholder', body)
+        yield Token(TokenType.Placeholder, body)
 
     elif validate_alpha(head):
         body, tail = extract_string(input_string)
 
         if body == 'grammar':
-            yield Token('grammar', body)
+            yield Token(TokenType.Grammar)
 
         elif body == 'entity':
-            yield Token('entity', body)
+            yield Token(TokenType.Entity)
 
         elif body == 'macro':
-            yield Token('macro', body)
+            yield Token(TokenType.Macro)
 
-        elif body in ['any', 'unique', 'if']:
-            yield Token('function', body)
+        elif body in ['any', 'if']:
+            for enum_itm in [Function.Any, Function.If]:
+                if body == enum_itm.value:
+                    yield Token(TokenType.Function, enum_itm)
+                    break
 
         else:
-            yield Token('symbol', body)
+            yield Token(TokenType.Symbol, body)
 
     elif head == '"':
         body, tail = extract_literal(tail)
-        yield Token('literal', body)
+        yield Token(TokenType.Literal, body)
 
     else:
         raise SyntaxError(f"Unknown Token: '{head}'")
