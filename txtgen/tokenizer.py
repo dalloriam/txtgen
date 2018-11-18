@@ -20,7 +20,7 @@ class Token:
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Token):
-            return NotImplemented
+            return NotImplemented  # pragma: nocover
 
         return other.value == self.value and other.type == self.type
 

@@ -47,7 +47,7 @@ class DescentParser:
                     f'with value [{self.current_token.value}] instead'
                 )
             else:
-                raise SyntaxError(f'Expected {token_type.name}, got EOF instead.')
+                raise SyntaxError(f'Expected {token_type.name}, got EOF instead.')  # pragma: nocover
 
     def grammar(self) -> nodes.Grammar:
         self._expect(TokenType.ParenOpen)
@@ -149,8 +149,8 @@ class DescentParser:
         body = self.expression()
 
         if self._accept(TokenType.ParenClose):
-            return nodes.ConditionNode({left_side: right_side}, body)
+            return nodes.ConditionNode((left_side, right_side), body)
 
         else_expr = self.expression()
         self._expect(TokenType.ParenClose)
-        return nodes.ConditionNode({left_side: right_side}, body, else_expr)
+        return nodes.ConditionNode((left_side, right_side), body, else_expr)

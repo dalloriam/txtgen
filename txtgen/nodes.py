@@ -1,6 +1,6 @@
 from txtgen.context import Context
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import random
 
@@ -16,9 +16,9 @@ def sub_punctuation(node: 'LiteralNode') -> 'Node':
 
 def exec_condition(node: 'ConditionNode', ctx: Context = None) -> 'Node':
     try:
-        for k, v in node.conditions.items():
-            if k.generate(ctx) != v.generate(ctx):
-                return node.else_expression
+        (left_cond, right_cond) = node.condition
+        if left_cond.generate(ctx) != right_cond.generate(ctx):
+            return node.else_expression
         return node.expression
 
     except ValueError:
@@ -43,10 +43,16 @@ class Node:
 
 class Grammar(Node):
 
-    def __init__(self, entities: Dict[str, 'EntityNode'], macros) -> None:
+    def __init__(self, entities: Dict[str, 'EntityNode'], macros: Dict[str, 'MacroNode']) -> None:
         super().__init__()
         self.entities = entities
         self.macros = macros
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, Grammar):
+            return NotImplemented
+
+        return self.entities == other.entities and self.macros == other.macros
 
     def generate(self, entity_name: str, ctx: dict = None) -> str:
         ctx = Context(ctx) if ctx else None
@@ -55,11 +61,20 @@ class Grammar(Node):
 
 class ConditionNode(Node):
 
-    def __init__(self, conditions: Dict[Node, Node], expression: Node, else_expression: Node = None) -> None:
+    def __init__(self, condition: Tuple[Node, Node], expression: Node, else_expression: Node = None) -> None:
         super().__init__()
-        self.conditions = conditions
+        self.condition = condition
         self.expression = expression
         self.else_expression = else_expression
+
+    def __eq__(self, other: Any):
+        if not isinstance(other, ConditionNode):
+            return NotImplemented
+
+        return self.condition[0] == other.condition[0] and \
+            other.condition[1] == other.condition[1] and \
+            self.expression == self.expression and \
+            self.else_expression == other.else_expression
 
     def generate(self, ctx: Context = None) -> str:
         out_node = exec_condition(self, ctx)
@@ -138,6 +153,12 @@ class ParameterNode(Node):
         self.name = name
         self.value: Optional[Node] = None
 
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, ParameterNode):
+            return NotImplemented
+
+        return self.name == other.name and self.value == other.value
+
     def generate(self, ctx: Context = None):
         if self.value is None:
             return ''
@@ -146,12 +167,20 @@ class ParameterNode(Node):
 
 class MacroNode(Node):
 
-    def __init__(self, name: str, params, children: List[Node]) -> None:
+    def __init__(self, name: str, params: List[ParameterNode], children: List[Node]) -> None:
         super().__init__()
         self.name = name
         self.params = params
 
         self.children = children
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, MacroNode):
+            return NotImplemented
+
+        return self.name == other.name and \
+            self.params == other.params and \
+            self.children == other.children
 
 
 class MacroReferenceNode(Node):
@@ -159,6 +188,12 @@ class MacroReferenceNode(Node):
     def __init__(self, key: str) -> None:
         super().__init__()
         self.key = key
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, MacroReferenceNode):
+            return NotImplemented
+
+        return self.key == other.key
 
 
 class EntityNode(Node):
@@ -168,6 +203,14 @@ class EntityNode(Node):
         self.name = name
         self.macro = macro
         self.children = children
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, EntityNode):
+            return NotImplemented
+
+        return self.name == other.name and \
+            self.macro == other.macro and \
+            self.children == other.children
 
     def generate(self, ctx: Context = None) -> str:
         return ''.join(
@@ -186,8 +229,7 @@ class AnyNode(Node):
         if not isinstance(other, AnyNode):
             return NotImplemented
 
-        return all(self.children[i] == c for i, c in enumerate(other.children)) and \
-            len(other.children) == len(self.children)
+        return self.children == other.children
 
     def generate(self, ctx: Context = None) -> str:
         return random.choice(self.children).generate(ctx=ctx)
@@ -221,8 +263,7 @@ class ListNode(Node):
         if not isinstance(other, ListNode):
             return NotImplemented
 
-        return all(self.children[i] == c for i, c in enumerate(other.children)) and \
-            len(other.children) == len(self.children)
+        return self.children == other.children
 
     def generate(self, ctx: Context = None) -> str:
         return ''.join(filter(lambda o: bool, (next_node.generate(ctx=ctx) for next_node in self.children)))

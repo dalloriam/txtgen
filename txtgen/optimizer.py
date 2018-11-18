@@ -112,7 +112,7 @@ class Optimizer:
         elif node.type == 'ConditionNode':
             node = cast(nodes.ConditionNode, node)
 
-            node.conditions = {self.walk(k, parent=node): self.walk(v, parent=node) for k, v in node.conditions.items()}
+            node.condition = (self.walk(node.condition[0], parent=node), self.walk(node.condition[1], parent=node))
             node.expression = self.walk(node.expression, parent=node)
             node.else_expression = self.walk(node.else_expression, parent=node)
 
