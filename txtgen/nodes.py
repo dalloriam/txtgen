@@ -1,3 +1,4 @@
+from txtgen.constants import PUNCTUATION
 from txtgen.context import Context
 
 from typing import Any, Dict, List, Optional, Tuple
@@ -6,7 +7,7 @@ import random
 
 
 def sub_punctuation(node: 'LiteralNode') -> 'Node':
-    if node.value not in [',', '.', ':', ';', '!', '?', '-']:
+    if node.value not in PUNCTUATION:
         return ListNode([
             LiteralNode(' '),
             node
@@ -21,7 +22,7 @@ def exec_condition(node: 'ConditionNode', ctx: Context = None) -> 'Node':
             return node.else_expression
         return node.expression
 
-    except ValueError:
+    except (ValueError, KeyError):
         return node
 
 
@@ -32,13 +33,7 @@ class Node:
 
     def generate(self, *args, **kwargs) -> str:
         """ Generate returns the value of the node. """
-        raise NotImplementedError
-
-    def display(self, padding: str = ''):
-        print(f'{padding}{self}')
-        if hasattr(self, 'children'):
-            for child in self.children:
-                child.display('    ' + padding)
+        raise NotImplementedError  # pragma: nocover
 
 
 class Grammar(Node):
@@ -50,7 +45,7 @@ class Grammar(Node):
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Grammar):
-            return NotImplemented
+            return NotImplemented  # pragma: nocover
 
         return self.entities == other.entities and self.macros == other.macros
 
@@ -69,7 +64,7 @@ class ConditionNode(Node):
 
     def __eq__(self, other: Any):
         if not isinstance(other, ConditionNode):
-            return NotImplemented
+            return NotImplemented  # pragma: nocover
 
         return self.condition[0] == other.condition[0] and \
             other.condition[1] == other.condition[1] and \

@@ -1,6 +1,9 @@
 from enum import Enum
 
 
+PUNCTUATION = [',', '.', ':', ';', '!', '?', '-']
+
+
 class TokenType(Enum):
     AngleOpen = '<'
     AngleClose = '>'
