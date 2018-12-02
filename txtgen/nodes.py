@@ -188,7 +188,7 @@ class PlaceholderNode(Node):
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, PlaceholderNode):
-            return NotImplemented
+            return NotImplemented  # pragma: nocover
 
         return self.key == other.key
 
@@ -212,9 +212,6 @@ class PlaceholderNode(Node):
         if not val:
             return ''
 
-        if isinstance(val, str):
-            return val
-
         return sub_punctuation(LiteralNode(random.choice(val))).generate()
 
 
@@ -235,7 +232,7 @@ class ReferenceNode(Node):
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, ReferenceNode):
-            return NotImplemented
+            return NotImplemented  # pragma: nocover
 
         return self.key == other.key
 
@@ -258,7 +255,7 @@ class ParameterNode(Node):
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, ParameterNode):
-            return NotImplemented
+            return NotImplemented  # pragma: nocover
 
         return self.name == other.name and self.value == other.value
 
@@ -297,7 +294,7 @@ class MacroNode(Node):
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, MacroNode):
-            return NotImplemented
+            return NotImplemented  # pragma: nocover
 
         return self.name == other.name and \
             self.params == other.params and \
@@ -345,7 +342,7 @@ class EntityNode(Node):
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, EntityNode):
-            return NotImplemented
+            return NotImplemented  # pragma: nocover
 
         return self.name == other.name and \
             self.macro == other.macro and \
@@ -382,7 +379,7 @@ class AnyNode(Node):
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, AnyNode):
-            return NotImplemented
+            return NotImplemented  # pragma: nocover
 
         return self.children == other.children
 
@@ -412,7 +409,7 @@ class OptionalNode(Node):
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, OptionalNode):
-            return NotImplemented
+            return NotImplemented  # pragma: nocover
 
         return other.expression == self.expression
 
@@ -446,7 +443,7 @@ class ListNode(Node):
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, ListNode):
-            return NotImplemented
+            return NotImplemented  # pragma: nocover
 
         return self.children == other.children
 
@@ -475,14 +472,11 @@ class RepeatNode(Node):
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, RepeatNode):
-            return NotImplemented
+            return NotImplemented  # pragma: nocover
 
         return self.n_repeat == other.n_repeat and self.expression == other.expression
 
     def generate(self, ctx: Context = None) -> str:
-        if not self.expression:
-            return ''
-
         body = ''
         for i in range(self.n_repeat):
             body += self.expression.generate(ctx=ctx)

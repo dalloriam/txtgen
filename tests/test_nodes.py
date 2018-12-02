@@ -245,9 +245,11 @@ def test_placeholder_node_eq(node_a: nodes.Node, node_b: nodes.Node, should_eq: 
 @pytest.mark.parametrize(
     'node,ctx,expected_output,want_err',
     [
+        (nodes.PlaceholderNode('a'), None, '', RuntimeError),
         (nodes.PlaceholderNode('a'), {}, '', RuntimeError),
         (nodes.PlaceholderNode('a'), {'a': 'hello'}, ' hello', None),
-        (nodes.PlaceholderNode('a'), {'a': ','}, ',', None)
+        (nodes.PlaceholderNode('a'), {'a': ','}, ',', None),
+        (nodes.PlaceholderNode('a'), {'a': []}, '', None)
     ]
 )
 def test_placeholder_node_generate(
@@ -258,7 +260,7 @@ def test_placeholder_node_generate(
 
     if want_err is not None:
         with pytest.raises(want_err):
-            node.generate(ctx=Context(ctx))
+            node.generate(ctx=Context(ctx) if ctx is not None else None)
     else:
         assert expected_output == node.generate(ctx=Context(ctx))
 
@@ -517,3 +519,26 @@ def test_list_node_generate(node: nodes.ListNode, ctx: dict, expected_output: st
             node.generate(ctx=Context(ctx))
     else:
         assert expected_output == node.generate(ctx=Context(ctx))
+
+
+@pytest.mark.parametrize(
+    'node_a,node_b,should_eq',
+    [
+        (nodes.RepeatNode(8, nodes.LiteralNode('a')), nodes.RepeatNode(8, nodes.LiteralNode('b')), False),
+        (nodes.RepeatNode(8, nodes.LiteralNode('a')), nodes.RepeatNode(1, nodes.LiteralNode('a')), False),
+        (nodes.RepeatNode(8, nodes.LiteralNode('a')), nodes.RepeatNode(8, nodes.LiteralNode('a')), True),
+    ]
+)
+def test_repeat_node_eq(node_a: nodes.Node, node_b: nodes.Node, should_eq: bool) -> None:
+    assert should_eq == (node_a == node_b)
+
+
+@pytest.mark.parametrize(
+    'node,ctx,expected_output',
+    [
+        (nodes.RepeatNode(3, nodes.LiteralNode('a')), {}, 'aaa'),
+        (nodes.RepeatNode(3, nodes.PlaceholderNode('a')), {'a': 'b'}, ' b b b'),
+    ]
+)
+def test_repeat_node_generate(node: nodes.RepeatNode, ctx: dict, expected_output: str) -> None:
+    assert expected_output == node.generate(ctx=Context(ctx))
