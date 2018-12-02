@@ -23,7 +23,8 @@ import pytest
                 (nodes.PlaceholderNode("a"), nodes.PlaceholderNode("b")),
                 nodes.ListNode([nodes.ReferenceNode('a'), nodes.ReferenceNode('b')]),
                 nodes.ReferenceNode('c')
-            ))
+            )),
+        ('(repeat 4 "hello")', nodes.RepeatNode(4, nodes.LiteralNode("hello")))
     ]
 )
 def test_parser_expression(text: str, expected_expression: Expression) -> None:

@@ -5,6 +5,9 @@ PUNCTUATION = [',', '.', ':', ';', '!', '?', '-']
 
 
 class TokenType(Enum):
+    """
+    TokenType represents the available token types.
+    """
     AngleOpen = '<'
     AngleClose = '>'
 
@@ -22,6 +25,8 @@ class TokenType(Enum):
 
     Macro = 'macro'
 
+    Integer = 'integer'
+
     ParenOpen = '('
     ParenClose = ')'
 
@@ -31,6 +36,10 @@ class TokenType(Enum):
 
 
 class Function(Enum):
+    """
+    Function represents the supported functions.
+    """
     Any = 'any'
     If = 'if'
+    Repeat = 'repeat'
 

@@ -1,5 +1,5 @@
 from txtgen.constants import TokenType, Function
-from txtgen.tokenizer import Token, extract_literal, extract_string, tokenize, validate_alpha
+from txtgen.tokenizer import Token, extract_integer, extract_literal, extract_string, tokenize, validate_alpha
 
 from typing import Any, List
 
@@ -79,6 +79,19 @@ def test_extract_string(in_str: str, expected_head: str, expected_tail: str):
 @pytest.mark.parametrize(
     'in_str,expected_head,expected_tail',
     [
+        ('145hello world', '145', list('hello world')),
+        ('14.38hello world', '14', list('.38hello world'))
+    ]
+)
+def test_extract_integer(in_str: str, expected_head: str, expected_tail: str) -> None:
+    head, tail = extract_integer(in_str)
+    assert expected_head == head
+    assert expected_tail == tail
+
+
+@pytest.mark.parametrize(
+    'in_str,expected_head,expected_tail',
+    [
         ('hello world" hello hello', 'hello world', list(' hello hello')),
         ('hello world', 'hello world', []),
     ]
@@ -98,13 +111,19 @@ def test_extract_literal(in_str: str, expected_head: str, expected_tail: str):
         ]),
         ('(=)', [Token(TokenType.ParenOpen), Token(TokenType.Equal), Token(TokenType.ParenClose)]),
         ('( (   (,  , , , , (', [Token(TokenType.ParenOpen)] * 4),
-        ('$hello.world_s "my man"', [Token(TokenType.Placeholder, "hello.world_s"), Token(TokenType.Literal, "my man")]),
+        (
+                '$hello.world_s "my man"',
+                [Token(TokenType.Placeholder, "hello.world_s"), Token(TokenType.Literal, "my man")]
+        ),
         ('grammar entity ( macro', [
             Token(TokenType.Grammar), Token(TokenType.Entity), Token(TokenType.ParenOpen), Token(TokenType.Macro)
         ]),
         ('(any if hello)', [
             Token(TokenType.ParenOpen), Token(TokenType.Function, Function.Any), Token(TokenType.Function, Function.If),
             Token(TokenType.Symbol, "hello"), Token(TokenType.ParenClose)
+        ]),
+        ('(145)', [
+            Token(TokenType.ParenOpen), Token(TokenType.Integer, 145), Token(TokenType.ParenClose)
         ])
     ]
 )
@@ -117,7 +136,7 @@ def test_tokenize_raises_syntax_error():
     tokens = []
 
     with pytest.raises(SyntaxError):
-        for itm in tokenize('(entity asdf "hello" % aksjdkasj)'):
+        for itm in tokenize('(entity asdf "hello" % something)'):
             tokens.append(itm)
 
     expected_tokens = [

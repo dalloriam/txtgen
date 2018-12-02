@@ -12,11 +12,15 @@ Expression = Union[
     nodes.OptionalNode,
     nodes.AnyNode,
     nodes.ListNode,
-    nodes.ConditionNode
+    nodes.ConditionNode,
+    nodes.RepeatNode
 ]
 
 
 class DescentParser:
+    """
+    Generates a token stream from source code and lazily parses it.
+    """
 
     def __init__(self, text: str) -> None:
         self.text = text
@@ -127,6 +131,10 @@ class DescentParser:
                 condition = self.condition()
                 return condition
 
+            if fn_type == Function.Repeat:
+                repeat = self.repeat()
+                return repeat
+
             children = []
 
             while not self._accept(TokenType.ParenClose):
@@ -140,6 +148,13 @@ class DescentParser:
             children.append(self.expression())
 
         return nodes.ListNode(children)
+
+    def repeat(self) -> nodes.RepeatNode:
+        self._expect(TokenType.Integer)
+        n_repeat = self.current_token.value
+        body = self.expression()
+        self._expect(TokenType.ParenClose)
+        return nodes.RepeatNode(n_repeat, body)
 
     def condition(self) -> nodes.ConditionNode:
         left_side = self.expression()
