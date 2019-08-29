@@ -13,7 +13,7 @@ Expression = Union[
     nodes.AnyNode,
     nodes.ListNode,
     nodes.ConditionNode,
-    nodes.RepeatNode
+    nodes.RepeatNode,
 ]
 
 
@@ -47,11 +47,13 @@ class DescentParser:
         if not self._accept(token_type):
             if self.current_token:
                 raise SyntaxError(
-                    f'Expected {token_type.name}, got {self.current_token.type.name} '
-                    f'with value [{self.current_token.value}] instead'
+                    f"Expected {token_type.name}, got {self.current_token.type.name} "
+                    f"with value [{self.current_token.value}] instead"
                 )
             else:
-                raise SyntaxError(f'Expected {token_type.name}, got EOF instead.')  # pragma: nocover
+                raise SyntaxError(
+                    f"Expected {token_type.name}, got EOF instead."
+                )  # pragma: nocover
 
     def grammar(self) -> nodes.Grammar:
         self._expect(TokenType.ParenOpen)

@@ -12,8 +12,8 @@ NodesWithChildren = Union[nodes.EntityNode, nodes.AnyNode, nodes.ListNode]
 
 
 def camelcase(name: str) -> str:
-    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
-    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+    s1 = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
+    return re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
 
 
 class Optimizer:
@@ -22,8 +22,12 @@ class Optimizer:
     (and thus improve performance).
     """
 
-    def __init__(self, entities: Dict[str, nodes.EntityNode],
-                 macros: Dict[str, nodes.MacroNode], ctx: Context = None) -> None:
+    def __init__(
+        self,
+        entities: Dict[str, nodes.EntityNode],
+        macros: Dict[str, nodes.MacroNode],
+        ctx: Context = None,
+    ) -> None:
         """
         Constructor.
         Args:
@@ -80,7 +84,7 @@ class Optimizer:
         # the actual param node.
         new_entities = {
             **self._entities,
-            **{p.name: cast(nodes.EntityNode, p) for p in node.params}
+            **{p.name: cast(nodes.EntityNode, p) for p in node.params},
         }
 
         optimizer = Optimizer(new_entities, self._macros)
@@ -157,11 +161,13 @@ class Optimizer:
         Returns:
             The replaced node.
         """
-        if node.value == '':
+        if node.value == "":
             return None
         return nodes.sub_punctuation(node)
 
-    def visit_placeholder_node(self, node: nodes.PlaceholderNode) -> Optional[nodes.Node]:
+    def visit_placeholder_node(
+        self, node: nodes.PlaceholderNode
+    ) -> Optional[nodes.Node]:
         """
         Optimizations:
             - If placeholder is defined in bound context, and placeholder key has a single value, replaces the
@@ -190,7 +196,9 @@ class Optimizer:
                 return None
             return self.visit_literal_node(nodes.LiteralNode(values[0]))
 
-        return nodes.AnyNode([self.visit_literal_node(nodes.LiteralNode(val)) for val in values])
+        return nodes.AnyNode(
+            [self.visit_literal_node(nodes.LiteralNode(val)) for val in values]
+        )
 
     @staticmethod
     def visit_repeat_node(node: nodes.RepeatNode) -> nodes.Node:
@@ -218,7 +226,7 @@ class Optimizer:
         if node is None:
             return None
 
-        if node.type == 'Grammar':
+        if node.type == "Grammar":
             node = cast(nodes.Grammar, node)
 
             for macro_name, macro in node.macros.items():
@@ -235,24 +243,30 @@ class Optimizer:
 
             node.entities = new_entities
 
-        elif node.type in {'EntityNode', 'AnyNode', 'ListNode', 'UniqueNode'}:
+        elif node.type in {"EntityNode", "AnyNode", "ListNode", "UniqueNode"}:
             node = cast(NodesWithChildren, node)
             node.children = list(
-                filter(lambda x: x is not None, [self.walk(child) for child in node.children])
+                filter(
+                    lambda x: x is not None,
+                    [self.walk(child) for child in node.children],
+                )
             )
 
-        elif node.type == 'ConditionNode':
+        elif node.type == "ConditionNode":
             node = cast(nodes.ConditionNode, node)
 
-            node.condition = (self.walk(node.condition[0]), self.walk(node.condition[1]))
+            node.condition = (
+                self.walk(node.condition[0]),
+                self.walk(node.condition[1]),
+            )
             node.expression = self.walk(node.expression)
             node.else_expression = self.walk(node.else_expression)
 
-        elif node.type == 'OptionalNode' or node.type == 'RepeatNode':
+        elif node.type == "OptionalNode" or node.type == "RepeatNode":
             node = cast(nodes.OptionalNode, node)
             node.expression = self.walk(node.expression)
 
-        visit_name = f'visit_{camelcase(node.type)}'
+        visit_name = f"visit_{camelcase(node.type)}"
 
         if hasattr(self, visit_name) and callable(getattr(self, visit_name)):
             node = getattr(self, visit_name)(node)

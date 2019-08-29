@@ -48,7 +48,7 @@ def validate_alpha(char: str) -> bool:
     Returns:
         Whether or not the character is valid.
     """
-    return char.isalpha() or char == '_' or char == '.'
+    return char.isalpha() or char == "_" or char == "."
 
 
 def extract_string(input_string: Union[str, List[str]]) -> Tuple[str, List[str]]:
@@ -64,7 +64,7 @@ def extract_string(input_string: Union[str, List[str]]) -> Tuple[str, List[str]]
 
     if len(tail) != 0 and validate_alpha(tail[0]):
         body, next_tail = extract_string(tail)
-        return ''.join([head, body]), next_tail
+        return "".join([head, body]), next_tail
 
     # Alphanum chain has stopped.
     return head, tail
@@ -82,7 +82,7 @@ def extract_integer(input_string: Union[str, List[str]]) -> Tuple[str, List[str]
     head, *tail = input_string
     if len(tail) != 0 and tail[0].isdigit():
         body, next_tail = extract_integer(tail)
-        return ''.join([head, body]), next_tail
+        return "".join([head, body]), next_tail
 
     return head, tail
 
@@ -100,7 +100,7 @@ def extract_literal(input_string: Union[List[str], Any]) -> Tuple[str, List[str]
 
     if len(tail) >= 1 and tail[0] != '"':
         body, next_tail = extract_literal(tail)
-        return ''.join([head, body]), next_tail
+        return "".join([head, body]), next_tail
 
     return head, tail[1:]  # Skip closing double-quote
 
@@ -119,55 +119,55 @@ def tokenize(input_string: Union[str, List[str]]) -> Iterator[Token]:
 
     head, *tail = input_string
 
-    if head == ')':
+    if head == ")":
         yield Token(TokenType.ParenClose)
 
-    elif head == '=':
+    elif head == "=":
         yield Token(TokenType.Equal)
 
-    elif head == '(':
+    elif head == "(":
         yield Token(TokenType.ParenOpen)
 
-    elif head == '<':
+    elif head == "<":
         yield Token(TokenType.AngleOpen)
 
-    elif head == '>':
+    elif head == ">":
         yield Token(TokenType.AngleClose)
 
-    elif head == '[':
+    elif head == "[":
         yield Token(TokenType.BracketOpen)
 
-    elif head == ']':
+    elif head == "]":
         yield Token(TokenType.BracketClose)
 
-    elif head.isspace() or head == ',':
+    elif head.isspace() or head == ",":
         # We want to ignore whitespace & commas in enumerations
         pass
 
-    elif head == '$':
+    elif head == "$":
         body, tail = extract_string(tail)
         yield Token(TokenType.Placeholder, body)
 
     elif head.isdigit():
         body, tail = extract_integer(input_string)
-        if '.' not in body:
+        if "." not in body:
             yield Token(TokenType.Integer, int(body))
         else:
-            raise SyntaxError('Floats are not supported yet.')
+            raise SyntaxError("Floats are not supported yet.")
 
     elif validate_alpha(head):
         body, tail = extract_string(input_string)
 
-        if body == 'grammar':
+        if body == "grammar":
             yield Token(TokenType.Grammar)
 
-        elif body == 'entity':
+        elif body == "entity":
             yield Token(TokenType.Entity)
 
-        elif body == 'macro':
+        elif body == "macro":
             yield Token(TokenType.Macro)
 
-        elif body in ['any', 'if', 'repeat']:
+        elif body in ["any", "if", "repeat"]:
             for enum_itm in [Function.Any, Function.If, Function.Repeat]:
                 if body == enum_itm.value:
                     yield Token(TokenType.Function, enum_itm)

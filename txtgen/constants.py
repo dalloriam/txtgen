@@ -1,45 +1,46 @@
 from enum import Enum
 
 
-PUNCTUATION = [',', '.', ':', ';', '!', '?', '-']
+PUNCTUATION = [",", ".", ":", ";", "!", "?", "-"]
 
 
 class TokenType(Enum):
     """
     TokenType represents the available token types.
     """
-    AngleOpen = '<'
-    AngleClose = '>'
 
-    BracketOpen = '['
-    BracketClose = ']'
+    AngleOpen = "<"
+    AngleClose = ">"
 
-    Entity = 'entity'
-    Equal = '='
+    BracketOpen = "["
+    BracketClose = "]"
 
-    Function = 'function'
+    Entity = "entity"
+    Equal = "="
 
-    Grammar = 'grammar'
+    Function = "function"
 
-    Literal = 'literal'
+    Grammar = "grammar"
 
-    Macro = 'macro'
+    Literal = "literal"
 
-    Integer = 'integer'
+    Macro = "macro"
 
-    ParenOpen = '('
-    ParenClose = ')'
+    Integer = "integer"
 
-    Placeholder = 'placeholder'
+    ParenOpen = "("
+    ParenClose = ")"
 
-    Symbol = 'symbol'
+    Placeholder = "placeholder"
+
+    Symbol = "symbol"
 
 
 class Function(Enum):
     """
     Function represents the supported functions.
     """
-    Any = 'any'
-    If = 'if'
-    Repeat = 'repeat'
 
+    Any = "any"
+    If = "if"
+    Repeat = "repeat"

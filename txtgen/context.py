@@ -23,7 +23,7 @@ class Context:
         Returns:
             A list of values corresponding to the key.
         """
-        split_path = key.split('.')
+        split_path = key.split(".")
 
         current_val: Any = self.ctx
         for path_segment in split_path:
