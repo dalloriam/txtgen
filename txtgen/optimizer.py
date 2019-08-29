@@ -37,7 +37,7 @@ class Optimizer:
         self._ctx = ctx
 
     @staticmethod
-    def visit_any_node(node: nodes.AnyNode) -> nodes.Node:
+    def visit_any_node(node: nodes.AnyNode) -> Optional[nodes.Node]:
         """
         Optimizations:
             - Replaces the AnyNode by its first child it has only one.
@@ -52,7 +52,7 @@ class Optimizer:
 
         return node
 
-    def visit_condition_node(self, node: nodes.ConditionNode) -> nodes.Node:
+    def visit_condition_node(self, node: nodes.ConditionNode) -> Optional[nodes.Node]:
         """
         Optimizations:
             - If all required context keys are defined, preemptively evaluate the condition and replace it by the
@@ -80,7 +80,7 @@ class Optimizer:
         # the actual param node.
         new_entities = {
             **self._entities,
-            **{p.name: p for p in node.params}
+            **{p.name: cast(nodes.EntityNode, p) for p in node.params}
         }
 
         optimizer = Optimizer(new_entities, self._macros)
@@ -161,7 +161,7 @@ class Optimizer:
             return None
         return nodes.sub_punctuation(node)
 
-    def visit_placeholder_node(self, node: nodes.PlaceholderNode) -> nodes.Node:
+    def visit_placeholder_node(self, node: nodes.PlaceholderNode) -> Optional[nodes.Node]:
         """
         Optimizations:
             - If placeholder is defined in bound context, and placeholder key has a single value, replaces the
@@ -186,6 +186,8 @@ class Optimizer:
             return node
 
         if len(values) == 1:
+            if values[0] is None:
+                return None
             return self.visit_literal_node(nodes.LiteralNode(values[0]))
 
         return nodes.AnyNode([self.visit_literal_node(nodes.LiteralNode(val)) for val in values])
@@ -203,7 +205,7 @@ class Optimizer:
         """
         return nodes.ListNode([node.expression for _ in range(node.n_repeat)])
 
-    def walk(self, node: nodes.Node) -> Optional[nodes.Node]:
+    def walk(self, node: Optional[nodes.Node]) -> Optional[nodes.Node]:
         """
         Walks the whole tree and applies the optimizations as it goes.
         Args:
@@ -220,14 +222,16 @@ class Optimizer:
             node = cast(nodes.Grammar, node)
 
             for macro_name, macro in node.macros.items():
-                node.macros[macro_name] = self.walk(macro)
+                new_macro = self.walk(macro)
+                assert new_macro is not None
+                node.macros[macro_name] = cast(nodes.MacroNode, new_macro)
 
-            new_entities = {}
+            new_entities = cast(Dict[str, nodes.EntityNode], {})
             for entity_name, entity in node.entities.items():
                 new_node = self.walk(entity)
 
                 if new_node is not None:
-                    new_entities[entity_name] = new_node
+                    new_entities[entity_name] = cast(nodes.EntityNode, new_node)
 
             node.entities = new_entities
 

@@ -1,5 +1,5 @@
 from txtgen.constants import Function, TokenType
-from typing import Any, Iterator, Tuple
+from typing import Any, Iterator, Tuple, Union, List
 
 
 class Token:
@@ -51,7 +51,7 @@ def validate_alpha(char: str) -> bool:
     return char.isalpha() or char == '_' or char == '.'
 
 
-def extract_string(input_string: str) -> Tuple[str, str]:
+def extract_string(input_string: Union[str, List[str]]) -> Tuple[str, List[str]]:
     """
     Recursively extracts a string from a stream.
     Args:
@@ -70,7 +70,7 @@ def extract_string(input_string: str) -> Tuple[str, str]:
     return head, tail
 
 
-def extract_integer(input_string: str) -> Tuple[str, str]:
+def extract_integer(input_string: Union[str, List[str]]) -> Tuple[str, List[str]]:
     """
     Recursively extracts a number from a stream.
     Args:
@@ -87,7 +87,7 @@ def extract_integer(input_string: str) -> Tuple[str, str]:
     return head, tail
 
 
-def extract_literal(input_string: str) -> Tuple[str, str]:
+def extract_literal(input_string: Union[List[str], Any]) -> Tuple[str, List[str]]:
     """
     Recursively extracts a literal from a stream.
     Args:
@@ -105,7 +105,7 @@ def extract_literal(input_string: str) -> Tuple[str, str]:
     return head, tail[1:]  # Skip closing double-quote
 
 
-def tokenize(input_string: str) -> Iterator[Token]:
+def tokenize(input_string: Union[str, List[str]]) -> Iterator[Token]:
     """
     Generates a token stream from source code.
     Args:

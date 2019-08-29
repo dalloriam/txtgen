@@ -2,7 +2,7 @@ from txtgen import nodes
 from txtgen.constants import Function, TokenType
 from txtgen.tokenizer import tokenize, Token
 
-from typing import Optional, Union
+from typing import Optional, Union, cast
 
 
 Expression = Union[
@@ -76,11 +76,14 @@ class DescentParser:
 
     def macro(self) -> nodes.MacroNode:
         self._expect(TokenType.Symbol)
+
+        assert self.current_token is not None
         macro_name = self.current_token.value
 
         macro_params = []
         self._expect(TokenType.ParenOpen)
         while self._accept(TokenType.Symbol):
+            assert self.current_token is not None
             macro_params.append(nodes.ParameterNode(self.current_token.value))
         self._expect(TokenType.ParenClose)
 
@@ -94,10 +97,14 @@ class DescentParser:
         entity_macro = None
 
         self._expect(TokenType.Symbol)
+
+        assert self.current_token is not None
         entity_name = self.current_token.value
 
         if self._accept(TokenType.AngleOpen):
             self._expect(TokenType.Symbol)
+
+            assert self.current_token is not None
             entity_macro = nodes.MacroReferenceNode(self.current_token.value)
             self._expect(TokenType.AngleClose)
 
@@ -110,12 +117,15 @@ class DescentParser:
 
     def expression(self) -> Expression:
         if self._accept(TokenType.Literal):
+            assert self.current_token is not None
             return nodes.LiteralNode(value=self.current_token.value)
 
         if self._accept(TokenType.Placeholder):
+            assert self.current_token is not None
             return nodes.PlaceholderNode(key=self.current_token.value)
 
         if self._accept(TokenType.Symbol):
+            assert self.current_token is not None
             return nodes.ReferenceNode(key=self.current_token.value)
 
         if self._accept(TokenType.BracketOpen):
@@ -125,6 +135,7 @@ class DescentParser:
 
         self._expect(TokenType.ParenOpen)
         if self._accept(TokenType.Function):
+            assert self.current_token is not None
             fn_type = self.current_token.value
 
             if fn_type == Function.If:
@@ -151,7 +162,8 @@ class DescentParser:
 
     def repeat(self) -> nodes.RepeatNode:
         self._expect(TokenType.Integer)
-        n_repeat = self.current_token.value
+        assert self.current_token is not None
+        n_repeat = cast(int, self.current_token.value)
         body = self.expression()
         self._expect(TokenType.ParenClose)
         return nodes.RepeatNode(n_repeat, body)

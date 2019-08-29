@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, cast
 
 
 class Context:
@@ -25,7 +25,7 @@ class Context:
         """
         split_path = key.split('.')
 
-        current_val = self.ctx
+        current_val: Any = self.ctx
         for path_segment in split_path:
             current_val = current_val[path_segment]
 
@@ -35,4 +35,4 @@ class Context:
         else:
             current_val = [str(item) for item in current_val]
 
-        return current_val
+        return cast(List[str], current_val)
